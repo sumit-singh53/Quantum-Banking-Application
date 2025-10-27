@@ -1,0 +1,253 @@
+version: '3.8'
+
+services:
+  # Security scanning services for development
+  
+  bandit-scanner:
+    image: python:3.11-slim
+    volumes:
+      - .:/app
+      - ./reports:/reports
+    working_dir: /app
+    command: >
+      bash -c "
+        pip install bandit[toml] &&
+        mkdir -p /reports/security &&
+        bandit -r services/ -f json -o /reports/security/bandit-report.json &&
+        bandit -r services/ -f txt -o /reports/security/bandit-report.txt &&
+        echo 'Bandit scan completed'
+      "
+    profiles:
+      - security
+
+  safety-scanner:
+    image: python:3.11-slim
+    volumes:
+      - .:/app
+      - ./reports:/reports
+    working_dir: /app
+    command: >
+      bash -c "
+        pip install safety &&
+        mkdir -p /reports/security &&
+        for req in services/*/requirements.txt; do
+          service_name=\$(basename \$(dirname \$req)) &&
+          safety check -r \$req --json --output /reports/security/safety-\$service_name.json || true &&
+          safety check -r \$req --output /reports/security/safety-\$service_name.txt || true
+        done &&
+        echo 'Safety scan completed'
+      "
+    profiles:
+      - security
+
+  trivy-scanner:
+    image: aquasec/trivy:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./reports:/reports
+    command: >
+      sh -c "
+        mkdir -p /reports/security &&
+        echo 'Trivy container scanner ready' &&
+        echo 'Use: docker-compose --profile security run trivy-scanner image <image-name>'
+      "
+    profiles:
+      - security
+
+  owasp-zap:
+    image: owasp/zap2docker-stable
+    volumes:
+      - ./reports:/zap/wrk
+    command: >
+      sh -c "
+        mkdir -p /zap/wrk/security &&
+        echo 'OWASP ZAP ready for baseline scan' &&
+        echo 'Use: docker-compose --profile security run owasp-zap zap-baseline.py -t <target-url>'
+      "
+    profiles:
+      - security
+
+  semgrep-scanner:
+    image: returntocorp/semgrep
+    volumes:
+      - .:/src
+      - ./reports:/reports
+    working_dir: /src
+    command: >
+      sh -c "
+        mkdir -p /reports/security &&
+        semgrep --config=auto --json --output=/reports/security/semgrep-report.json services/ &&
+        semgrep --config=auto --output=/reports/security/semgrep-report.txt services/ &&
+        echo 'Semgrep scan completed'
+      "
+    profiles:
+      - security
+
+  pqc-auditor:
+    image: python:3.11-slim
+    volumes:
+      - .:/app
+      - ./reports:/reports
+    working_dir: /app
+    command: >
+      bash -c "
+        pip install cryptography pycryptodome &&
+        mkdir -p /reports/security &&
+        cat > /tmp/pqc_audit.py << 'EOF'
+        #!/usr/bin/env python3
+        import os
+        import re
+        import json
+        import sys
+        from pathlib import Path
+        from datetime import datetime
+
+        def audit_pqc_implementation():
+            results = {
+                'timestamp': datetime.utcnow().isoformat(),
+                'algorithms_found': [],
+                'vulnerabilities': [],
+                'compliance_issues': [],
+                'recommendations': [],
+                'quantum_readiness_score': 0
+            }
+            
+            # NIST-approved PQC algorithms
+            approved_pqc = [
+                'kyber', 'ml-kem', 'crystals-kyber',
+                'dilithium', 'ml-dsa', 'crystals-dilithium',
+                'falcon', 'sphincs', 'slh-dsa'
+            ]
+            
+            # Deprecated/vulnerable algorithms
+            deprecated_algorithms = [
+                'md5', 'sha1', 'des', '3des', 'rc4', 'rc2'
+            ]
+            
+            # Quantum-vulnerable algorithms
+            quantum_vulnerable = [
+                'rsa', 'ecdsa', 'ecdh', 'dh', 'dsa'
+            ]
+            
+            total_files = 0
+            pqc_files = 0
+            
+            # Scan all Python files
+            for py_file in Path('services').rglob('*.py'):
+                total_files += 1
+                try:
+                    with open(py_file, 'r', encoding='utf-8', errors='ignore') as f:
+                        content = f.read().lower()
+                        
+                        # Check for PQC algorithms
+                        pqc_found = False
+                        for algo in approved_pqc:
+                            if re.search(rf'\\b{algo}\\b', content):
+                                results['algorithms_found'].append({
+                                    'algorithm': algo,
+                                    'file': str(py_file),
+                                    'status': 'approved',
+                                    'type': 'pqc'
+                                })
+                                pqc_found = True
+                        
+                        if pqc_found:
+                            pqc_files += 1
+                        
+                        # Check for deprecated algorithms
+                        for algo in deprecated_algorithms:
+                            if re.search(rf'\\b{algo}\\b', content):
+                                results['vulnerabilities'].append({
+                                    'type': 'deprecated_algorithm',
+                                    'algorithm': algo,
+                                    'file': str(py_file),
+                                    'severity': 'critical'
+                                })
+                        
+                        # Check for quantum-vulnerable algorithms
+                        for algo in quantum_vulnerable:
+                            if re.search(rf'\\b{algo}\\b', content):
+                                results['compliance_issues'].append({
+                                    'type': 'quantum_vulnerable',
+                                    'algorithm': algo,
+                                    'file': str(py_file),
+                                    'severity': 'medium'
+                                })
+                except Exception as e:
+                    print(f'Error reading {py_file}: {e}')
+            
+            # Calculate quantum readiness score
+            if total_files > 0:
+                pqc_coverage = (pqc_files / total_files) * 100
+                vulnerability_penalty = len(results['vulnerabilities']) * 10
+                compliance_penalty = len(results['compliance_issues']) * 5
+                
+                results['quantum_readiness_score'] = max(0, min(100, 
+                    pqc_coverage - vulnerability_penalty - compliance_penalty))
+            
+            # Generate recommendations
+            if results['quantum_readiness_score'] < 50:
+                results['recommendations'].append('Low quantum readiness score. Increase PQC algorithm adoption.')
+            
+            if len(results['vulnerabilities']) > 0:
+                results['recommendations'].append('Critical vulnerabilities found. Immediate remediation required.')
+            
+            if len(results['algorithms_found']) == 0:
+                results['recommendations'].append('No PQC algorithms detected. Begin PQC migration planning.')
+            
+            return results
+
+        if __name__ == '__main__':
+            audit_results = audit_pqc_implementation()
+            
+            print('=== Post-Quantum Cryptography Security Audit ===')
+            print(f'Quantum Readiness Score: {audit_results[\"quantum_readiness_score\"]:.1f}/100')
+            print(f'PQC Algorithms Found: {len(audit_results[\"algorithms_found\"])}')
+            print(f'Critical Vulnerabilities: {len(audit_results[\"vulnerabilities\"])}')
+            print(f'Compliance Issues: {len(audit_results[\"compliance_issues\"])}')
+            
+            # Save detailed results
+            with open('/reports/security/pqc-audit-detailed.json', 'w') as f:
+                json.dump(audit_results, f, indent=2)
+            
+            print('PQC security audit completed successfully.')
+        EOF
+        python /tmp/pqc_audit.py &&
+        echo 'PQC audit completed'
+      "
+    profiles:
+      - security
+
+  security-reporter:
+    image: python:3.11-slim
+    volumes:
+      - ./reports:/reports
+    command: >
+      bash -c "
+        pip install jq &&
+        cd /reports/security &&
+        echo '# Security Scan Summary' > security-summary.md &&
+        echo '' >> security-summary.md &&
+        echo '**Scan Date:** '$(date -u) >> security-summary.md &&
+        echo '' >> security-summary.md &&
+        echo '## Results' >> security-summary.md &&
+        echo '' >> security-summary.md &&
+        if [ -f bandit-report.json ]; then
+          echo '- Bandit: Completed' >> security-summary.md
+        fi &&
+        if [ -f pqc-audit-detailed.json ]; then
+          echo '- PQC Audit: Completed' >> security-summary.md
+        fi &&
+        echo '' >> security-summary.md &&
+        echo 'Security report generated: security-summary.md'
+      "
+    profiles:
+      - security
+    depends_on:
+      - bandit-scanner
+      - safety-scanner
+      - pqc-auditor
+
+networks:
+  default:
+    name: quantum-banking-security

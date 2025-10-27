@@ -1,0 +1,289 @@
+# ===================================
+# Quantum Banking Application
+# Comprehensive .gitignore
+# ===================================
+
+# Dependencies and Package Managers
+node_modules/
+*/node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+.yarn/
+.pnp.*
+
+# Python Dependencies
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.pyc
+*.pyo
+*.pyd
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.conda/
+conda-meta/
+
+# Build Outputs and Artifacts
+build/
+dist/
+out/
+target/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+.vite/
+*/.vite/
+.turbo/
+.webpack/
+
+# Frontend Build Artifacts
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/out/
+frontend/.cache/
+frontend/.vite/
+
+# Service Build Artifacts
+services/*/build/
+services/*/dist/
+services/*/target/
+services/*/.cache/
+
+# Test Coverage and Reports
+coverage/
+*.lcov
+.nyc_output/
+test-results/
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+junit.xml
+test-report.xml
+coverage.xml
+
+# Logs and Runtime Data
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pids/
+*.pid
+*.seed
+*.pid.lock
+services/*/logs/
+audit-logs/
+transaction-logs/
+
+# Environment Variables and Secrets
+.env
+.env.*
+!.env.example
+!.env.template
+*.env
+services/*/.env
+services/*/.env.*
+!services/*/.env.example
+config/.env*
+config/secrets/
+vault-keys/
+encryption-keys/
+
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+data/
+database/
+postgres-data/
+redis-data/
+
+# Docker and Container Files
+.dockerignore
+docker-compose.override.yml
+docker-compose.local.yml
+.docker/
+docker-volumes/
+Dockerfile.local
+
+# Kubernetes Sensitive Files
+k8s/secrets-actual.yaml
+k8s/*-secret.yaml
+k8s/*/secrets-actual.yaml
+k8s/*/*-secret.yaml
+!k8s/secrets.yaml
+!k8s/*/secrets.yaml
+k8s/production/
+k8s/staging/
+k8s/local/
+
+# Certificates and Cryptographic Material
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+ssl/
+certs/
+keys/
+tls/
+certificates/
+pqc-keys/
+quantum-keys/
+
+# IDE and Editor Files
+.vscode/
+!.vscode/recommended-extensions.json
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.atom/
+.brackets.json
+
+# OS Generated Files
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.AppleDouble
+.LSOverride
+Icon
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+*.stackdump
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Temporary Files
+tmp/
+temp/
+.tmp/
+.temp/
+*.tmp
+*.temp
+.cache/
+
+# Backup Files
+*.bak
+*.backup
+backup/
+backups/
+*.orig
+*.rej
+
+# Monitoring and Metrics
+metrics/
+monitoring/logs/
+grafana/data/
+prometheus/data/
+jaeger-data/
+elasticsearch-data/
+
+# Local Development Overrides
+local-config/
+dev-secrets/
+development/
+local/
+.local/
+
+# Banking/Financial Specific
+# Sensitive configuration files
+config/production/
+config/staging/
+config/local/
+financial-data/
+transaction-data/
+customer-data/
+pii-data/
+compliance-reports/
+audit-trails/
+
+# Media and Upload Directories
+media/
+uploads/
+static/uploads/
+services/*/media/
+services/*/uploads/
+
+# GitHub and CI/CD Secrets
+.github/workflows/secrets.yml
+.github/secrets/
+.secrets/
+
+# Package Manager Lock Files (optional - uncomment if needed)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Service-specific exclusions
+services/*/node_modules/
+services/*/__pycache__/
+services/*/build/
+services/*/dist/
+services/*/.cache/
+services/*/logs/
+services/*/tmp/
+
+# Reports and Analytics
+reports/local/
+reports/temp/
+reports/*.pdf
+reports/*.xlsx
+reports/*.csv

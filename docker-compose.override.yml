@@ -1,0 +1,51 @@
+# Docker Compose override for development
+# This simplifies the setup by disabling SSL requirements
+
+version: '3.8'
+
+services:
+  # Simplified PostgreSQL services without SSL for development
+  postgres-user:
+    command: postgres
+    environment:
+      POSTGRES_DB: user_service_db
+      POSTGRES_USER: user_service
+      POSTGRES_PASSWORD: user_secure_pass
+    volumes:
+      - postgres_user_data:/var/lib/postgresql/data
+
+  postgres-account:
+    command: postgres
+    environment:
+      POSTGRES_DB: account_service_db
+      POSTGRES_USER: account_service
+      POSTGRES_PASSWORD: account_secure_pass
+    volumes:
+      - postgres_account_data:/var/lib/postgresql/data
+
+  postgres-payments:
+    command: postgres
+    environment:
+      POSTGRES_DB: payments_service_db
+      POSTGRES_USER: payments_service
+      POSTGRES_PASSWORD: payments_secure_pass
+    volumes:
+      - postgres_payments_data:/var/lib/postgresql/data
+
+  postgres-fraud:
+    command: postgres
+    environment:
+      POSTGRES_DB: fraud_service_db
+      POSTGRES_USER: fraud_service
+      POSTGRES_PASSWORD: fraud_secure_pass
+    volumes:
+      - postgres_fraud_data:/var/lib/postgresql/data
+
+  postgres-compliance:
+    command: postgres
+    environment:
+      POSTGRES_DB: compliance_service_db
+      POSTGRES_USER: compliance_service
+      POSTGRES_PASSWORD: compliance_secure_pass
+    volumes:
+      - postgres_compliance_data:/var/lib/postgresql/data

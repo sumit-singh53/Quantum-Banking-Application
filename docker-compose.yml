@@ -1,0 +1,440 @@
+version: '3.8'
+
+services:
+  # Infrastructure Services
+  postgres-user:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: user_service_db
+      POSTGRES_USER: user_service
+      POSTGRES_PASSWORD: user_secure_pass
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    volumes:
+      - postgres_user_data:/var/lib/postgresql/data
+      - ./scripts/postgres-ssl:/etc/ssl/certs
+    ports:
+      - "5432:5432"
+    command: >
+      postgres
+      -c ssl=on
+      -c ssl_cert_file=/etc/ssl/certs/server.crt
+      -c ssl_key_file=/etc/ssl/certs/server.key
+      -c ssl_ca_file=/etc/ssl/certs/ca.crt
+    networks:
+      - banking-network
+
+  postgres-account:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: account_service_db
+      POSTGRES_USER: account_service
+      POSTGRES_PASSWORD: account_secure_pass
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    volumes:
+      - postgres_account_data:/var/lib/postgresql/data
+      - ./scripts/postgres-ssl:/etc/ssl/certs
+    ports:
+      - "5433:5432"
+    command: >
+      postgres
+      -c ssl=on
+      -c ssl_cert_file=/etc/ssl/certs/server.crt
+      -c ssl_key_file=/etc/ssl/certs/server.key
+      -c ssl_ca_file=/etc/ssl/certs/ca.crt
+    networks:
+      - banking-network
+
+  postgres-payments:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: payments_service_db
+      POSTGRES_USER: payments_service
+      POSTGRES_PASSWORD: payments_secure_pass
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    volumes:
+      - postgres_payments_data:/var/lib/postgresql/data
+      - ./scripts/postgres-ssl:/etc/ssl/certs
+    ports:
+      - "5434:5432"
+    command: >
+      postgres
+      -c ssl=on
+      -c ssl_cert_file=/etc/ssl/certs/server.crt
+      -c ssl_key_file=/etc/ssl/certs/server.key
+      -c ssl_ca_file=/etc/ssl/certs/ca.crt
+    networks:
+      - banking-network
+
+  postgres-fraud:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: fraud_service_db
+      POSTGRES_USER: fraud_service
+      POSTGRES_PASSWORD: fraud_secure_pass
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    volumes:
+      - postgres_fraud_data:/var/lib/postgresql/data
+      - ./scripts/postgres-ssl:/etc/ssl/certs
+    ports:
+      - "5435:5432"
+    command: >
+      postgres
+      -c ssl=on
+      -c ssl_cert_file=/etc/ssl/certs/server.crt
+      -c ssl_key_file=/etc/ssl/certs/server.key
+      -c ssl_ca_file=/etc/ssl/certs/ca.crt
+    networks:
+      - banking-network
+
+  postgres-compliance:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: compliance_service_db
+      POSTGRES_USER: compliance_service
+      POSTGRES_PASSWORD: compliance_secure_pass
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    volumes:
+      - postgres_compliance_data:/var/lib/postgresql/data
+      - ./scripts/postgres-ssl:/etc/ssl/certs
+    ports:
+      - "5436:5432"
+    command: >
+      postgres
+      -c ssl=on
+      -c ssl_cert_file=/etc/ssl/certs/server.crt
+      -c ssl_key_file=/etc/ssl/certs/server.key
+      -c ssl_ca_file=/etc/ssl/certs/ca.crt
+    networks:
+      - banking-network
+
+  postgres-kms:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: kms_service_db
+      POSTGRES_USER: kms_service
+      POSTGRES_PASSWORD: kms_secure_pass
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    volumes:
+      - postgres_kms_data:/var/lib/postgresql/data
+      - ./scripts/postgres-ssl:/etc/ssl/certs
+    ports:
+      - "5437:5432"
+    command: >
+      postgres
+      -c ssl=on
+      -c ssl_cert_file=/etc/ssl/certs/server.crt
+      -c ssl_key_file=/etc/ssl/certs/server.key
+      -c ssl_ca_file=/etc/ssl/certs/ca.crt
+    networks:
+      - banking-network
+
+  postgres-anomaly:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: anomaly_service_db
+      POSTGRES_USER: anomaly_service
+      POSTGRES_PASSWORD: anomaly_secure_pass
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    volumes:
+      - postgres_anomaly_data:/var/lib/postgresql/data
+      - ./scripts/postgres-ssl:/etc/ssl/certs
+    ports:
+      - "5438:5432"
+    command: >
+      postgres
+      -c ssl=on
+      -c ssl_cert_file=/etc/ssl/certs/server.crt
+      -c ssl_key_file=/etc/ssl/certs/server.key
+      -c ssl_ca_file=/etc/ssl/certs/ca.crt
+    networks:
+      - banking-network
+
+  postgres-notification:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: notification_service_db
+      POSTGRES_USER: notification_service
+      POSTGRES_PASSWORD: notification_secure_pass
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    volumes:
+      - postgres_notification_data:/var/lib/postgresql/data
+      - ./scripts/postgres-ssl:/etc/ssl/certs
+    ports:
+      - "5439:5432"
+    command: >
+      postgres
+      -c ssl=on
+      -c ssl_cert_file=/etc/ssl/certs/server.crt
+      -c ssl_key_file=/etc/ssl/certs/server.key
+      -c ssl_ca_file=/etc/ssl/certs/ca.crt
+    networks:
+      - banking-network
+
+  redis:
+    image: redis:7-alpine
+    command: >
+      redis-server
+      --requirepass redis_secure_pass
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
+    networks:
+      - banking-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SYNC_LIMIT: 2
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+    networks:
+      - banking-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    ports:
+      - "29092:29092"
+    networks:
+      - banking-network
+
+  # HashiCorp Vault for Key Management
+  vault:
+    image: vault:1.15
+    cap_add:
+      - IPC_LOCK
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: dev-root-token
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+    ports:
+      - "8200:8200"
+    volumes:
+      - vault_data:/vault/data
+      - ./config/vault:/vault/config
+    command: vault server -dev -dev-root-token-id=dev-root-token
+    networks:
+      - banking-network
+
+  # Microservices
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - VAULT_URL=http://vault:8200
+      - VAULT_TOKEN=dev-root-token
+    depends_on:
+      - redis
+      - vault
+    volumes:
+      - ./config/nginx:/etc/nginx/conf.d
+    networks:
+      - banking-network
+
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=postgresql://user_service:user_secure_pass@postgres-user:5432/user_service_db?sslmode=require
+      - REDIS_URL=redis://:redis_secure_pass@redis:6379/0
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - VAULT_URL=http://vault:8200
+      - VAULT_TOKEN=dev-root-token
+    depends_on:
+      - postgres-user
+      - redis
+      - kafka
+      - vault
+    networks:
+      - banking-network
+
+  account-service:
+    build:
+      context: ./services/account-service
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8000"
+    environment:
+      - DATABASE_URL=postgresql://account_service:account_secure_pass@postgres-account:5432/account_service_db?sslmode=require
+      - REDIS_URL=redis://:redis_secure_pass@redis:6379/1
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - VAULT_URL=http://vault:8200
+      - VAULT_TOKEN=dev-root-token
+    depends_on:
+      - postgres-account
+      - redis
+      - kafka
+      - vault
+    networks:
+      - banking-network
+
+  payments-service:
+    build:
+      context: ./services/payments-service
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8000"
+    environment:
+      - DATABASE_URL=postgresql://payments_service:payments_secure_pass@postgres-payments:5432/payments_service_db?sslmode=require
+      - REDIS_URL=redis://:redis_secure_pass@redis:6379/2
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - VAULT_URL=http://vault:8200
+      - VAULT_TOKEN=dev-root-token
+    depends_on:
+      - postgres-payments
+      - redis
+      - kafka
+      - vault
+    networks:
+      - banking-network
+
+  fraud-service:
+    build:
+      context: ./services/fraud-service
+      dockerfile: Dockerfile
+    ports:
+      - "8004:8000"
+    environment:
+      - DATABASE_URL=postgresql://fraud_service:fraud_secure_pass@postgres-fraud:5432/fraud_service_db?sslmode=require
+      - REDIS_URL=redis://:redis_secure_pass@redis:6379/3
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - VAULT_URL=http://vault:8200
+      - VAULT_TOKEN=dev-root-token
+    depends_on:
+      - postgres-fraud
+      - redis
+      - kafka
+      - vault
+    networks:
+      - banking-network
+
+  compliance-service:
+    build:
+      context: ./services/compliance-service
+      dockerfile: Dockerfile
+    ports:
+      - "8005:8000"
+    environment:
+      - DATABASE_URL=postgresql://compliance_service:compliance_secure_pass@postgres-compliance:5432/compliance_service_db?sslmode=require
+      - REDIS_URL=redis://:redis_secure_pass@redis:6379/4
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - VAULT_URL=http://vault:8200
+      - VAULT_TOKEN=dev-root-token
+    depends_on:
+      - postgres-compliance
+      - redis
+      - kafka
+      - vault
+    networks:
+      - banking-network
+
+  kms-service:
+    build:
+      context: ./services/kms-service
+      dockerfile: Dockerfile
+    ports:
+      - "8006:8000"
+    environment:
+      - DATABASE_URL=postgresql://kms_service:kms_secure_pass@postgres-kms:5432/kms_service_db?sslmode=require
+      - REDIS_URL=redis://:redis_secure_pass@redis:6379/5
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - VAULT_URL=http://vault:8200
+      - VAULT_TOKEN=dev-root-token
+    depends_on:
+      - postgres-kms
+      - redis
+      - kafka
+      - vault
+    networks:
+      - banking-network
+
+  anomaly-service:
+    build:
+      context: ./services/anomaly-service
+      dockerfile: Dockerfile
+    ports:
+      - "8007:8000"
+    environment:
+      - DATABASE_URL=postgresql://anomaly_service:anomaly_secure_pass@postgres-anomaly:5432/anomaly_service_db?sslmode=require
+      - REDIS_URL=redis://:redis_secure_pass@redis:6379/6
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - VAULT_URL=http://vault:8200
+      - VAULT_TOKEN=dev-root-token
+    depends_on:
+      - postgres-anomaly
+      - redis
+      - kafka
+      - vault
+    networks:
+      - banking-network
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    ports:
+      - "8008:8000"
+    environment:
+      - DATABASE_URL=postgresql://notification_service:notification_secure_pass@postgres-notification:5432/notification_service_db?sslmode=require
+      - REDIS_URL=redis://:redis_secure_pass@redis:6379/7
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - VAULT_URL=http://vault:8200
+      - VAULT_TOKEN=dev-root-token
+    depends_on:
+      - postgres-notification
+      - redis
+      - kafka
+      - vault
+    networks:
+      - banking-network
+
+volumes:
+  postgres_user_data:
+  postgres_account_data:
+  postgres_payments_data:
+  postgres_fraud_data:
+  postgres_compliance_data:
+  postgres_kms_data:
+  postgres_anomaly_data:
+  postgres_notification_data:
+  redis_data:
+  kafka_data:
+  zookeeper_data:
+  zookeeper_logs:
+  vault_data:
+
+networks:
+  banking-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

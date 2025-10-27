@@ -1,0 +1,18 @@
+{
+  "name": "quantum-banking-app",
+  "version": "1.0.0",
+  "description": "Quantum Banking Application with Post-Quantum Cryptography",
+  "scripts": {
+    "test": "cd frontend && npm test",
+    "test:watch": "cd frontend && npm run test:watch",
+    "test:ui": "cd frontend && npm run test:ui",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build:frontend": "cd frontend && npm run build",
+    "lint:frontend": "cd frontend && npm run lint"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "react-circular-progressbar": "^2.2.0"
+  }
+}
